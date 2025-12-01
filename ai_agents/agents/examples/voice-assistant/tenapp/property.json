@@ -25,65 +25,15 @@
             },
             {
               "type": "extension",
-              "name": "stt",
-              "addon": "deepgram_asr_python",
-              "extension_group": "stt",
-              "property": {
-                "params": {
-                  "api_key": "${env:DEEPGRAM_API_KEY}",
-                  "language": "en-US",
-                  "model": "nova-3"
-                }
-              }
-            },
-            {
-              "type": "extension",
-              "name": "llm",
-              "addon": "openai_llm2_python",
-              "extension_group": "chatgpt",
-              "property": {
-                "base_url": "https://api.openai.com/v1",
-                "api_key": "${env:OPENAI_API_KEY}",
-                "frequency_penalty": 0.9,
-                "model": "${env:OPENAI_MODEL}",
-                "max_tokens": 512,
-                "prompt": "",
-                "proxy_url": "${env:OPENAI_PROXY_URL|}",
-                "greeting": "TEN Agent connected. How can I help you today?",
-                "max_memory_length": 10
-              }
-            },
-            {
-              "type": "extension",
-              "name": "tts",
-              "addon": "elevenlabs_tts2_python",
-              "extension_group": "tts",
-              "property": {
-                "dump": false,
-                "dump_path": "./",
-                "params": {
-                  "key": "${env:ELEVENLABS_TTS_KEY}",
-                  "model_id": "eleven_multilingual_v2",
-                  "voice_id": "pNInz6obpgDQGcFmaJgB",
-                  "output_format": "pcm_16000"
-                }
-              }
-            },
-            {
-              "type": "extension",
               "name": "main_control",
-              "addon": "main_python",
+              "addon": "openai_llm2_python",
               "extension_group": "control",
               "property": {
-                "greeting": "TEN Agent connected. How can I help you today?"
+                "model": "kimi-k2-turbo-preview",
+                "base_url": "https://api.moonshot.cn/v1",
+                "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
+                "prompt": "你是一个会开玩笑的语音对话机器人"
               }
-            },
-            {
-              "type": "extension",
-              "name": "message_collector",
-              "addon": "message_collector2",
-              "extension_group": "transcriber",
-              "property": {}
             },
             {
               "type": "extension",
@@ -99,45 +49,39 @@
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
               "property": {}
+            },
+            {
+              "type": "extension",
+              "name": "huoshan_asr",
+              "addon": "bytedance_asr",
+              "property": {
+                "dump_path": "./",
+                "dump": false,
+                "params": {
+                  "appid": "1479571115",
+                  "language": "zh-CN",
+                  "cluster": "CdpyiKN6fwMJa3xEpJ6MK85qzmHRlUC0",
+                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s"
+                }
+              }
+            },
+            {
+              "type": "extension",
+              "name": "huoshan_tts",
+              "addon": "bytedance_tts_duplex",
+              "property": {
+                "params": {
+                  "app_id": "1479571115",
+                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s",
+                  "speaker": "zh_female_shuangkuaisisi_moon_bigtts"
+                },
+                "dump": false,
+                "dump_path": "./",
+                "enable_words": false
+              }
             }
           ],
           "connections": [
-            {
-              "extension": "main_control",
-              "cmd": [
-                {
-                  "names": [
-                    "on_user_joined",
-                    "on_user_left"
-                  ],
-                  "source": [
-                    {
-                      "extension": "agora_rtc"
-                    }
-                  ]
-                },
-                {
-                  "names": [
-                    "tool_register"
-                  ],
-                  "source": [
-                    {
-                      "extension": "weatherapi_tool_python"
-                    }
-                  ]
-                }
-              ],
-              "data": [
-                {
-                  "name": "asr_result",
-                  "source": [
-                    {
-                      "extension": "stt"
-                    }
-                  ]
-                }
-              ]
-            },
             {
               "extension": "agora_rtc",
               "audio_frame": [
@@ -145,38 +89,46 @@
                   "name": "pcm_frame",
                   "dest": [
                     {
-                      "extension": "streamid_adapter"
-                    }
-                  ]
-                },
-                {
-                  "name": "pcm_frame",
-                  "source": [
-                    {
-                      "extension": "tts"
-                    }
-                  ]
-                }
-              ],
-              "data": [
-                {
-                  "name": "data",
-                  "source": [
-                    {
-                      "extension": "message_collector"
+                      "extension": "huoshan_asr"
                     }
                   ]
                 }
               ]
             },
             {
-              "extension": "streamid_adapter",
+              "extension": "huoshan_asr",
+              "data": [
+                {
+                  "name": "asr_result",
+                  "dest": [
+                    {
+                      "extension": "main_control"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "extension": "main_control",
+              "data": [
+                {
+                  "name": "tts_text_input",
+                  "dest": [
+                    {
+                      "extension": "huoshan_tts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "extension": "huoshan_tts",
               "audio_frame": [
                 {
                   "name": "pcm_frame",
                   "dest": [
                     {
-                      "extension": "stt"
+                      "extension": "agora_rtc"
                     }
                   ]
                 }

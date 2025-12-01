@@ -1,0 +1,176 @@
+{
+  "ten": {
+    "log": {
+      "handlers": [
+        {
+          "emitter": {
+            "config": {
+              "stream": "stdout"
+            },
+            "type": "console"
+          },
+          "formatter": {
+            "colored": true,
+            "type": "plain"
+          },
+          "matchers": [
+            {
+              "level": "info"
+            }
+          ]
+        }
+      ]
+    },
+    "predefined_graphs": [
+      {
+        "auto_start": true,
+        "graph": {
+          "connections": [
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "huoshan_asr"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                }
+              ],
+              "extension": "agora_rtc"
+            },
+            {
+              "data": [
+                {
+                  "dest": [
+                    {
+                      "extension": "main_control"
+                    }
+                  ],
+                  "name": "asr_result"
+                }
+              ],
+              "extension": "huoshan_asr"
+            },
+            {
+              "data": [
+                {
+                  "dest": [
+                    {
+                      "extension": "huoshan_tts"
+                    }
+                  ],
+                  "name": "tts_text_input"
+                }
+              ],
+              "extension": "main_control"
+            },
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "agora_rtc"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                }
+              ],
+              "extension": "huoshan_tts"
+            }
+          ],
+          "nodes": [
+            {
+              "addon": "agora_rtc",
+              "extension_group": "default",
+              "name": "agora_rtc",
+              "property": {
+                "app_certificate": "${env:AGORA_APP_CERTIFICATE|}",
+                "app_id": "${env:AGORA_APP_ID}",
+                "channel": "agora_a5sygk",
+                "enable_agora_asr": false,
+                "publish_audio": true,
+                "publish_data": true,
+                "remote_stream_id": 170997,
+                "stream_id": 0,
+                "subscribe_audio": true,
+                "token": "007eJxSYKg5NLX572PhBoV34pcKzvXPMGCY1rp514/wf8/yRHgPX1mlwGBqaWpokpaYampgaG5inmxkaW6cZJRiYp5ibmaaZmBseIVVPbMhkJHhzPs1jEwMjAwsDIwMID4TmGQGkyxgkochMT2/KDE+0bS4Mj2bkcEApByimJHBABAAAP//qjwoJQ=="
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_llm_based_asr",
+              "extension_group": "control",
+              "name": "main_control",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "access_key": "${env:BYTEDANCE_ASR_LLM_ACCESS_KEY|}",
+                  "app_key": "${env:BYTEDANCE_ASR_LLM_APP_KEY|}",
+                  "audio": {
+                    "format": "pcm"
+                  },
+                  "language": "zh-CN",
+                  "model_version": "${env:BYTEDANCE_ASR_LLM_MODEL_VERSION|}",
+                  "request": {
+                    "enable_nonstream": true,
+                    "model_name": "bigmodel",
+                    "result_type": "single"
+                  },
+                  "resource_id": "${env:BYTEDANCE_ASR_LLM_RESOURCE_ID|}"
+                }
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "weatherapi_tool_python",
+              "extension_group": "default",
+              "name": "weatherapi_tool_python",
+              "property": {
+                "api_key": "${env:WEATHERAPI_API_KEY|}"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "streamid_adapter",
+              "name": "streamid_adapter",
+              "property": {},
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_asr",
+              "name": "huoshan_asr",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "appid": "1479571115",
+                  "cluster": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s",
+                  "language": "zh-CN",
+                  "token": "CdpyiKN6fwMJa3xEpJ6MK85qzmHRlUC0"
+                }
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_tts_duplex",
+              "name": "huoshan_tts",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "app_id": "1479571115",
+                  "speaker": "zh_female_shuangkuaisisi_moon_bigtts",
+                  "token": "${env:BYTEDANCE_TTS_TOKEN|}"
+                }
+              },
+              "type": "extension"
+            }
+          ]
+        },
+        "name": "voice_assistant"
+      }
+    ]
+  }
+}

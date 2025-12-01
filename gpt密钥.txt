@@ -1,0 +1,85 @@
+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
+
+# 公共认证
+VOLCENGINE_ACCESS_KEY=AKLTMDY0NTlmOWIxYjM3NGI5NWFiNmNjYTk1MDUwNDIwOTA
+VOLCENGINE_SECRET_KEY=TW1Nd1lUQXpPRE13Tm1abU5EYzBabUZpWmpabFpqSXlaVFJpTnpneVlqSQ==
+VOLCENGINE_SESSION_TOKEN=
+VOLCENGINE_REGION=cn-beijing
+echo "AGORA_APP_ID=59515fae501747c2973b2d47d765f031" > .env
+echo "AGORA_APP_CERT=6c944086d7964f9fbe1a20d561788b56" >> .env
+AGORA_APP_ID=59515fae501747c2973b2d47d765f031
+AGORA_APP_CERT=6c944086d7964f9fbe1a20d561788b56
+
+AGORA_APP_CERTIFICATE=6ea6e329062b4a6e914325a8725d91d2
+
+# ======== ASR：大模型流式语音识别 ========
+VOLCENGINE_ASR_APP_ID=1479571115
+VOLCENGINE_ASR_ACCESS_TOKEN=zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s
+VOLCENGINE_ASR_CLUSTER_ID=volcano_tts
+VOLCENGINE_ASR_ADDRESS=wss://openspeech.bytedance.com
+VOLCENGINE_ASR_URI=/api/v3/sauc/bigmodel
+VOLCENGINE_ASR_VAD_SILENCE_TIME=600
+VOLCENGINE_ASR_VOLUME_GAIN=0.3
+
+
+# ======== LLM：豆包大模型 ========
+VOLCENGINE_LLM_API_KEY=c2caed6e-de66-4520-b03d-f61a917c6c38
+VOLCENGINE_LLM_MODEL=doubao-seed-1-6-251015
+VOLCENGINE_LLM_ENDPOINT=https://ark.cn-beijing.volces.com/api/v1/chat/completions
+VOLCENGINE_LLM_REGION=cn-beijing
+VOLCENGINE_LLM_MAX_TOKENS=1000
+VOLCENGINE_LLM_TEMPERATURE=0.7
+VOLCENGINE_LLM_TOP_P=0.9
+VOLCENGINE_LLM_TOP_K=0
+
+
+# ======== TTS：大模型实时语音合成 ========
+VOLCENGINE_TTS_APP_ID=1479571115
+VOLCENGINE_TTS_ACCESS_TOKEN=zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s
+VOLCENGINE_TTS_CLUSTER_ID=volcano_tts
+VOLCENGINE_TTS_VOICE_TYPE=BV034_streaming
+VOLCENGINE_TTS_VOLUME_RATIO=1.0
+VOLCENGINE_TTS_SPEED_RATIO=1.0
+VOLCENGINE_TTS_PITCH_RATIO=1.0
+VOLCENGINE_TTS_EMOTION=neutral
+VOLCENGINE_TTS_LANGUAGE=zh
+VOLCENGINE_TTS_ADDRESS=openspeech.bytedance.com
+VOLCENGINE_TTS_URI=/api/v1/tts/ws_binary
+
+
+#############################################
+#  Agora —— 不使用也必须填写（TEN 强制校验）
+#############################################
+AGORA_APP_ID=59515fae501747c2973b2d47d765f031
+AGORA_APP_CERT=6c944086d7964f9fbe1a20d561788b56
+AGORA_CHANNEL=嵌入式RTC
+
+#############################################
+#   火山引擎 —— 你真正要用的是这个
+#############################################
+VOLC_ACCESS_KEY=你的AK
+VOLC_SECRET_KEY=你的SK
+VOLC_APP_ID=你的AppId
+VOLC_ASR_MODEL=Doubao_scene_SLM_Doubao_realtime_voice_model2000000477017759554
+
+VOLC_TTS_APPID=1479571115
+VOLC_TTS_TOKEN=zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s
+VOLC_TTS_SECRET=CdpyiKN6fwMJa3xEpJ6MK85qzmHRl
+VOLC_TTS_CLUSTER=volcano_tts
+VOLC_TTS_SCENE=聊天助手
+
+#############################################
+# OpenAI（不用的话留空）
+#############################################
+OPENAI_API_KEY=dummy
+
+cd /app/agents/examples/voice-assistant/tenapp/ten_packages/extension/agora_rtc
+
+# 创建/覆盖 .env
+cat > .env << 'EENV'
+AGORA_APP_ID=59515fae501747c2973b2d47d765f031
+AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56
+AGORA_CHANNEL=demo
+EENV
+
+

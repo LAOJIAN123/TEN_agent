@@ -1,0 +1,164 @@
+{
+  "ten": {
+    "log": {
+      "handlers": [
+        {
+          "emitter": {
+            "config": {
+              "stream": "stdout"
+            },
+            "type": "console"
+          },
+          "formatter": {
+            "colored": true,
+            "type": "plain"
+          },
+          "matchers": [
+            {
+              "level": "info"
+            }
+          ]
+        }
+      ]
+    },
+    "predefined_graphs": [
+      {
+        "auto_start": true,
+        "graph": {
+          "connections": [
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "huoshan_asr"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                }
+              ],
+              "extension": "agora_rtc"
+            },
+            {
+              "data": [
+                {
+                  "dest": [
+                    {
+                      "extension": "main_control"
+                    }
+                  ],
+                  "name": "asr_result"
+                }
+              ],
+              "extension": "huoshan_asr"
+            },
+            {
+              "data": [
+                {
+                  "dest": [
+                    {
+                      "extension": "huoshan_tts"
+                    }
+                  ],
+                  "name": "tts_text_input"
+                }
+              ],
+              "extension": "main_control"
+            },
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "agora_rtc"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                }
+              ],
+              "extension": "huoshan_tts"
+            }
+          ],
+          "nodes": [
+            {
+              "addon": "agora_rtc",
+              "extension_group": "default",
+              "name": "agora_rtc",
+              "property": {
+                "app_certificate": "${env:AGORA_APP_CERTIFICATE|}",
+                "app_id": "${env:AGORA_APP_ID}",
+                "channel": "agora_df0s3b",
+                "enable_agora_asr": false,
+                "publish_audio": true,
+                "publish_data": true,
+                "remote_stream_id": 103124,
+                "stream_id": 0,
+                "subscribe_audio": true,
+                "token": "007eJxSYGgzPDdPmdVe9eQDb+eHy+/85D1/ISLNrlNm8tlXy/NcGu8rMJhamhqapCWmmhoYmpuYJxtZmhsnGaWYmKeYm5mmGRgb7tiontkQyMiwOk+GhYmBkYGFgZEBxGcCk8xgkgVM8jAkpucXJcanpBkUGycxMhiAlEMUMzIYAAIAAP//0/4l5w=="
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "openai_llm2_python",
+              "extension_group": "control",
+              "name": "main_control",
+              "property": {
+                "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
+                "base_url": "https://api.moonshot.cn/v1",
+                "model": "kimi-k2-turbo-preview",
+                "prompt": "你是一个会开玩笑的语音对话机器人"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "weatherapi_tool_python",
+              "extension_group": "default",
+              "name": "weatherapi_tool_python",
+              "property": {
+                "api_key": "${env:WEATHERAPI_API_KEY|}"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "streamid_adapter",
+              "name": "streamid_adapter",
+              "property": {},
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_asr",
+              "name": "huoshan_asr",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "appid": "1479571115",
+                  "cluster": "CdpyiKN6fwMJa3xEpJ6MK85qzmHRlUC0",
+                  "language": "zh-CN",
+                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s"
+                }
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_tts_duplex",
+              "name": "huoshan_tts",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "enable_words": false,
+                "params": {
+                  "app_id": "1479571115",
+                  "speaker": "zh_female_shuangkuaisisi_moon_bigtts",
+                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s"
+                }
+              },
+              "type": "extension"
+            }
+          ]
+        },
+        "name": "voice_assistant"
+      }
+    ]
+  }
+}
