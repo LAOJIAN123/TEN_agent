@@ -142,3 +142,8 @@ ai_agents/.idea
 ai_agents/*.log
 ai_agents/*.pcm
 /.trae
+ai_agents/agents/examples/voice-assistant/tenapp/manifest-lock.json
+ai_agents/agents/examples/voice-assistant/tenapp/property.json
+ai_agents/esp32-client/build
+
+ai_agents/esp32-client/managed_components

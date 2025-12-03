@@ -8,6 +8,16 @@
 - 视频链路（非 `CONFIG_AUDIO_ONLY`）：摄像头采集 YUV422 → 软件 JPEG 编码 → `send_rtc_video_frame` 上行；帧间隔默认 200 ms。
 - TEN-Agent HTTP 接口：`token/generate` 获取 appId/token，`start` 选择 graph 并传入 RTC 编码参数，`ping` 保活，`stop` 终止；响应解析填充全局 `g_app` 状态驱动 RTC。
 
+### 拓扑图（逻辑链路）
+```
+[Mic] --I2S--> [ADF 采集+AEC] --PCM--> [Agora RTC 上行] --(Ten-Agent Graph)--> [LLM/TTS]
+   ^                                               |
+   |                                               v
+[Speaker] <--PCM-- [Agora RTC 下行] <---(生成语音)-- [Ten-Agent]
+
+[Camera] --YUV--> [JPEG 编码] --Frame--> [Agora RTC 上行] --(Ten-Agent Graph)--> [LLM/Vision]
+```
+
 ## 关键配置
 - `main/app_config.h`
   - `TENAI_AGENT_URL`：TEN-Agent 服务地址（通常 8080）。
@@ -18,6 +28,19 @@
   - 全局状态 `app_t` 与音频参数常量（采样率、帧长、payload type），`TENAI_AUDIO_CODEC` 通过 HTTP 传给 TEN-Agent，对应 RTC payload type。
 - `main/Kconfig.projbuild`
   - menuconfig 中配置 Wi‑Fi SSID/PWD、CPU 频率等。
+
+## 文件职责速查
+- `README.md` / `README.cn.md`：硬件需求、环境准备、编译/烧录步骤。
+- `main/CMakeLists.txt`：组件依赖声明（esp-adf、esp32-camera、agora_iot_sdk 等）。
+- `main/app_config.h`：TEN-Agent URL、Graph/模型参数、频道/用户 ID、编解码宏开关。
+- `main/common.h`：全局状态结构、音频采样/帧长/codec 常量、TEN-Agent codec 参数。
+- `main/ai_agent.c` + `ai_agent.h`：TEN-Agent HTTP 客户端，构造 JSON（generate/start/ping/stop），解析响应并填充 `g_app`。
+- `main/rtc_proc.c` + `rtc_proc.h`：Agora IoT SDK 适配，事件回调、入会/退会、音视频帧发送。
+- `main/audio_proc.c` + `audio_proc.h`：ADF 音频采集/播放管线，AEC 处理，上行 PCM 发送，下行播放，音量接口。
+- `main/video_proc.c` + `video_proc.h`：摄像头引脚与分辨率配置，JPEG 编码，视频帧采集/发送线程。
+- `main/llm_main.c`：应用入口，Wi‑Fi/按键初始化，启动音视频任务，调用 TEN-Agent generate/start/stop/ping，主循环打印内存。
+- `main/Kconfig.projbuild`：menuconfig 选项（Wi‑Fi、CPU 频率）。
+- `partitions.csv` / `sdkconfig*`：分区和编译配置（由 menuconfig/工具生成，通常无需手改）。
 
 ## 模块职责
 - `main/ai_agent.c`：封装 TEN-Agent HTTP 交互。构建 JSON 请求、发送 `generate/start/ping/stop`，解析 `{code,msg,data}` 提取 appId/token 并更新 `g_app`。

@@ -2,8 +2,8 @@
 
 
 //LLM Agent Service
-#define TENAI_AGENT_URL       "http://<ip_address>:<port>"
-
+// #define TENAI_AGENT_URL       "http://<ip_address>:<port>"
+#define TENAI_AGENT_URL       "https://agent.theten.ai"
 // LLM Agent Graph, you can select openai or gemini 
 // #define CONFIG_GRAPH_OPENAI   /* openai, just only audio */
 #define CONFIG_GRAPH_GEMINI     /* gemini, for video and audio, but not support chinese language */
@@ -28,7 +28,7 @@
 // LLM Agent Task Name
 #define AI_AGENT_NAME          "tenai0125-11"
 // LLM Agent Channel Name
-#define AI_AGENT_CHANNEL_NAME  "aiAgent_chn0124-11"
+#define AI_AGENT_CHANNEL_NAME  "agora_nctfzx"
 // LLM User Id
 #define AI_AGENT_USER_ID        12345 // user id, for device
 

@@ -77,7 +77,6 @@ static esp_err_t recorder_pipeline_open(void)
   algorithm_stream_cfg_t algo_config = ALGORITHM_STREAM_CFG_DEFAULT();
   algo_config.input_type = ALGORITHM_STREAM_INPUT_TYPE1;
   algo_config.algo_mask  = ALGORITHM_STREAM_USE_AEC;
-  algo_config.swap_ch    = true;
   element_algo = algo_stream_init(&algo_config);
   audio_element_set_music_info(element_algo, CONFIG_PCM_SAMPLE_RATE, 1, 16);
 

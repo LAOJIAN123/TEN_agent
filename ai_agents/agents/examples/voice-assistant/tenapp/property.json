@@ -25,14 +25,15 @@
             },
             {
               "type": "extension",
-              "name": "main_control",
-              "addon": "openai_llm2_python",
-              "extension_group": "control",
+              "name": "stt",
+              "addon": "deepgram_asr_python",
+              "extension_group": "stt",
               "property": {
-                "model": "kimi-k2-turbo-preview",
-                "base_url": "https://api.moonshot.cn/v1",
-                "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
-                "prompt": "你是一个会开玩笑的语音对话机器人"
+                "params": {
+                  "model": "nova-3",
+                  "language": "zh",
+                  "api_key": "430f3ebe0a55461470a28807b25b3469c105dded"
+                }
               }
             },
             {
@@ -52,32 +53,46 @@
             },
             {
               "type": "extension",
-              "name": "huoshan_asr",
-              "addon": "bytedance_asr",
+              "name": "main_control",
+              "addon": "main_python",
+              "extension_group": "control",
               "property": {
-                "dump_path": "./",
-                "dump": false,
-                "params": {
-                  "appid": "1479571115",
-                  "language": "zh-CN",
-                  "cluster": "CdpyiKN6fwMJa3xEpJ6MK85qzmHRlUC0",
-                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s"
-                }
+                "greeting": "TEN Agent connected. How can I help you today?"
               }
             },
             {
               "type": "extension",
-              "name": "huoshan_tts",
-              "addon": "bytedance_tts_duplex",
+              "name": "message_collector",
+              "addon": "message_collector2",
+              "extension_group": "transcriber",
+              "property": {}
+            },
+            {
+              "type": "extension",
+              "name": "llm",
+              "addon": "openai_llm2_python",
+              "extension_group": "chatgpt",
+              "property": {
+                "base_url": "https://api.moonshot.cn/v1",
+                "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
+                "model": "kimi-k2-turbo-preview",
+                "prompt": "你是一个会开玩笑的语音对话机器人,只会说中文"
+              }
+            },
+            {
+              "type": "extension",
+              "name": "tts",
+              "addon": "elevenlabs_tts2_python",
+              "extension_group": "tts",
               "property": {
                 "params": {
-                  "app_id": "1479571115",
-                  "token": "zZNUK0oal4etsaLPZj2J1C2J3gVKnf0s",
-                  "speaker": "zh_female_shuangkuaisisi_moon_bigtts"
+                  "key": "sk_49d964226c0a9763396cd086c0f555807b50d1b3fb0bf69d",
+                  "voice_id": "pNInz6obpgDQGcFmaJgB",
+                  "model_id": "eleven_multilingual_v2",
+                  "output_format": "pcm_16000"
                 },
                 "dump": false,
-                "dump_path": "./",
-                "enable_words": false
+                "dump_path": "./"
               }
             }
           ],
@@ -89,20 +104,38 @@
                   "name": "pcm_frame",
                   "dest": [
                     {
-                      "extension": "huoshan_asr"
+                      "extension": "streamid_adapter"
+                    }
+                  ]
+                },
+                {
+                  "name": "pcm_frame",
+                  "source": [
+                    {
+                      "extension": "tts"
+                    }
+                  ]
+                }
+              ],
+              "data": [
+                {
+                  "name": "data",
+                  "source": [
+                    {
+                      "extension": "message_collector"
                     }
                   ]
                 }
               ]
             },
             {
-              "extension": "huoshan_asr",
-              "data": [
+              "extension": "streamid_adapter",
+              "audio_frame": [
                 {
-                  "name": "asr_result",
+                  "name": "pcm_frame",
                   "dest": [
                     {
-                      "extension": "main_control"
+                      "extension": "stt"
                     }
                   ]
                 }
@@ -112,25 +145,56 @@
               "extension": "main_control",
               "data": [
                 {
+                  "name": "asr_result",
+                  "source": [
+                    {
+                      "extension": "stt"
+                    }
+                  ]
+                },
+                {
                   "name": "tts_text_input",
                   "dest": [
                     {
-                      "extension": "huoshan_tts"
+                      "extension": "tts"
+                    }
+                  ]
+                }
+              ],
+              "cmd": [
+                {
+                  "names": [
+                    "on_user_joined",
+                    "on_user_left"
+                  ],
+                  "source": [
+                    {
+                      "extension": "agora_rtc"
+                    }
+                  ]
+                },
+                {
+                  "names": [
+                    "tool_register"
+                  ],
+                  "source": [
+                    {
+                      "extension": "weatherapi_tool_python"
                     }
                   ]
                 }
               ]
             },
             {
-              "extension": "huoshan_tts",
-              "audio_frame": [
+              "extension": "main_control",
+              "cmd": [
                 {
-                  "name": "pcm_frame",
                   "dest": [
                     {
-                      "extension": "agora_rtc"
+                      "extension": "llm"
                     }
-                  ]
+                  ],
+                  "name": "chat_completion"
                 }
               ]
             }

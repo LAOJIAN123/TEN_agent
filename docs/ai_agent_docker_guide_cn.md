@@ -84,6 +84,21 @@ docker run --rm -it --env-file .env -p 3000:3000 example-app
 - 密钥相关报错：确认 `.env` 已填且容器内能读取；可在容器内 `cat .env` 校验。
 - 国内网络下载依赖慢：在 shell 中配置 HTTP(S) 代理；必要时为 Docker 和 npm/pip/Go 单独设置代理源。
 - `.env` 未加载或日志目录创建失败：根因是没有 `.env` 或缺少 `LOG_PATH` 等变量。解决：在仓库根和 `ai_agents/.env` 填写 `LOG_PATH=./logs`、`LOG_STDOUT=true`、`SERVER_PORT=8080`、`WORKERS_MAX=4`、`WORKER_QUIT_TIMEOUT_SECONDS=60` 等，并确保对应目录存在（`mkdir logs` / `mkdir ai_agents/logs`）。
+1.在运行目路设置变量
+`AGORA_APP_ID=59515fae501747c2973b2d47d765f031`
+`AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56`
+1.在运行目路设置变量
+echo "AGORA_APP_ID=59515fae501747c2973b2d47d765f031" > .env
+echo "AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56" >> .env
+
+export AGORA_APP_ID=59515fae501747c2973b2d47d765f031
+export AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56
+export AGORA_CHANNEL=demo
+
+2.在docker-compose.yml 里永久设置
+`environment:`
+      `AGORA_APP_ID: "59515fae501747c2973b2d47d765f031"`
+     ` AGORA_APP_CERTIFICATE: "6c944086d7964f9fbe1a20d561788b56"`
 - `Module not found: Can't resolve 'lucide-react'`（前端 3000 端口）：进入对应前端目录安装依赖。示例：`cd ai_agents/agents/examples/rtm-transport/frontend && npm ci`；若锁文件不一致就改用 `npm install` 或删除 `node_modules` 后 `bun install --verbose`。
 - 局域网访问 TMAN Designer：compose 默认将容器 49483 映射到宿主机 9501。其他电脑用 `http://<宿主机IP>:9501` 访问；若想直接用 49483，可把映射改成 `"49483:49483"` 后重启 `docker compose up -d`，并确保宿主机防火墙放行端口。
 

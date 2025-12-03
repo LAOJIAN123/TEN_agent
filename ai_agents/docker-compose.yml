@@ -12,6 +12,9 @@ services:
     # 只让容器启动一个 bash 挂着，保持长期存活
     command: bash
 
+    environment:
+      AGORA_APP_ID: "59515fae501747c2973b2d47d765f031"
+      AGORA_APP_CERTIFICATE: "6c944086d7964f9fbe1a20d561788b56"
     # 比 always 稍微安全一点，手动停才停
     restart: unless-stopped
 

@@ -83,3 +83,8 @@ AGORA_CHANNEL=demo
 EENV
 
 
+Deepgram	Speech-to-text:
+430f3ebe0a55461470a28807b25b3469c105dded
+
+ElevenLabs	Text-to-speech
+sk_49d964226c0a9763396cd086c0f555807b50d1b3fb0bf69d

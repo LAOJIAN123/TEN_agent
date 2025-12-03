@@ -171,8 +171,8 @@
     {
       "type": "extension",
       "name": "bytedance_llm_based_asr",
-      "version": "0.2.6",
-      "hash": "3a88cc40a0753c35ef331e62fd4963b6f84cf44af13638e14905f20d5a3bc829",
+      "version": "0.2.7",
+      "hash": "2ac8dd3385507c78b7e7ac5608da91d7cf32ee6db84aac00fd6dec7a5e32d5b0",
       "dependencies": [
         {
           "type": "system",
