@@ -20,7 +20,7 @@ from ten_runtime import AsyncTenEnv
 
 # https://www.volcengine.com/docs/6561/1329505#%E7%A4%BA%E4%BE%8Bsamples
 
-# Connection-related constants
+# Connection-related constants（连接/协议常量定义）
 MAX_RETRY_TIMES_FOR_TRANSPORT = 5
 ERR_WS_CONNECTION = 0
 
@@ -82,6 +82,8 @@ EVENT_TTS_TTFB_METRIC = 888
 
 
 class Header:
+    """协议头部封装，用于构造火山双工 WS 二进制帧的前 4 字节。"""
+
     def __init__(
         self,
         protocol_version=PROTOCOL_VERSION,
@@ -112,6 +114,8 @@ class Header:
 
 
 class Optional:
+    """协议 optional 区域，承载事件号、sessionId、sequence 等可选字段。"""
+
     def __init__(
         self,
         event: int = EVENT_NONE,
@@ -141,6 +145,8 @@ class Optional:
 
 
 class Response:
+    """解析后的响应对象，包含头、可选字段和负载。"""
+
     def __init__(self, header: Header, optional: Optional):
         self.optional = optional
         self.header = header
@@ -149,6 +155,7 @@ class Response:
 
 
 class ServerResponse(BaseModel):
+    """对外友好的响应结构（给业务层使用）。"""
     event: int = EVENT_NONE
     sessionId: str | None = None
     response_meta_json: str | None = None
@@ -159,7 +166,7 @@ class ServerResponse(BaseModel):
 
 
 def parser_response(res) -> Response:
-    """Parse the response from the server."""
+    """解析底层 WS 返回的二进制数据，拆出 header/optional/payload。"""
     if isinstance(res, str):
         raise RuntimeError(res)
     response = Response(Header(), Optional())
@@ -222,7 +229,7 @@ def parser_response(res) -> Response:
 
 
 def read_res_content(res: bytes, offset: int):
-    """read content from response bytes"""
+    """读取字符串内容（带长度）"""
     content_size = int.from_bytes(res[offset : offset + 4], "big", signed=False)
     offset += 4
     content = str(res[offset : offset + content_size], encoding="utf8")
@@ -231,7 +238,7 @@ def read_res_content(res: bytes, offset: int):
 
 
 def read_res_payload(res: bytes, offset: int):
-    """read payload from response bytes"""
+    """读取原始 payload（bytes）"""
     payload_size = int.from_bytes(res[offset : offset + 4], "big", signed=False)
     offset += 4
     payload = res[offset : offset + payload_size]
@@ -240,6 +247,11 @@ def read_res_payload(res: bytes, offset: int):
 
 
 class BytedanceV3Synthesizer:
+    """
+    单次连接/会话的封装：负责建链、维持 session、发送文本、接收音频。
+    一个 synthesizer 内部管理 websocket、发送/接收协程和事件队列。
+    """
+
     def __init__(
         self,
         config: BytedanceTTSDuplexConfig,
@@ -286,6 +298,7 @@ class BytedanceV3Synthesizer:
         self.websocket_task = asyncio.create_task(self._process_websocket())
 
     def gen_log_id(self) -> str:
+        """生成符合火山要求的 logid。"""
         ts = int(time.time() * 1000)
         r = fastrand.pcg32bounded(1 << 24) + (1 << 20)
         local_ip = "00000000000000000000000000000000"
@@ -328,7 +341,7 @@ class BytedanceV3Synthesizer:
         return str.encode(json_str)
 
     def _process_ws_exception(self, exp) -> None | Exception:
-        """Handle websocket connection exceptions and decide whether to reconnect"""
+        """处理建连异常，超过重试阈值则让外层抛出。"""
         self.ten_env.log_warn(
             f"Websocket internal error during connecting: {exp}."
         )
@@ -341,7 +354,7 @@ class BytedanceV3Synthesizer:
         return None  # Return None to continue reconnection
 
     async def _process_websocket(self) -> None:
-        """Main websocket connection monitoring and reconnection logic"""
+        """主协程：负责 websocket 建连、重连，以及启动收/发子协程。"""
         try:
             self.ten_env.log_info("Starting websocket connection process")
             # Use websockets.connect's automatic reconnection mechanism
@@ -434,7 +447,7 @@ class BytedanceV3Synthesizer:
             self.ten_env.log_info("Websocket connection process ended.")
 
     async def _send_loop(self, ws: WebSocketClientProtocol) -> None:
-        """Text sending loop"""
+        """发送循环：从队列取命令，确保按顺序先 start_session 再发送文本。"""
         try:
             while not self._session_closing:
                 # Get command from queue
@@ -470,7 +483,7 @@ class BytedanceV3Synthesizer:
             raise e
 
     async def _receive_loop(self, ws: WebSocketClientProtocol) -> None:
-        """Message receiving loop"""
+        """接收循环：监听服务端推送的二进制消息并交给 _handle_server_response。"""
         try:
             # Mark receive loop as ready
             self._receive_ready_event.set()
@@ -499,7 +512,7 @@ class BytedanceV3Synthesizer:
             raise e
 
     async def _handle_server_response(self, message: ServerResponse):
-        """Handle server responses"""
+        """处理解析后的服务端事件，推送到 response_msgs 供上层消费。"""
         if message.event == EVENT_ConnectionStarted:
             self._connection_success = True
             self._connection_event.set()
@@ -539,11 +552,11 @@ class BytedanceV3Synthesizer:
                 await self.response_msgs.put((message.event, b""))
 
     async def send_text(self, text: str):
-        """Send text (external interface)"""
+        """对外接口：排队发送文本。"""
         await self.text_queue.put(("text", text))
 
     async def queue_finish_session(self):
-        """Queue finish session command to ensure proper order"""
+        """对外接口：排队发送 finish_session，保证顺序。"""
         await self.text_queue.put(("finish_session", None))
 
     async def _send_text_internal(self, ws: WebSocketClientProtocol, text: str):
@@ -678,7 +691,7 @@ class BytedanceV3Synthesizer:
         self.ten_env.log_info("KEYPOINT Session finished successfully")
 
     async def finish_session(self):
-        """Public finish session method - queues the command for proper ordering"""
+        """对外接口：结束当前 session，实际操作由发送协程串行执行。"""
         await self.queue_finish_session()
 
     async def finish_connection(self):
@@ -755,7 +768,7 @@ class BytedanceV3Synthesizer:
         self.ten_env.log_debug(f"[{tag}] Payload JSON: {res.payload_json}")
 
     def cancel(self) -> None:
-        """Cancel current connection, used for flush scenarios"""
+        """取消当前连接，清队列，用于 flush/中断场景。"""
         self.ten_env.log_info("Cancelling the request.")
 
         # The websocket connection might be not established yet, if so, using
@@ -779,7 +792,7 @@ class BytedanceV3Synthesizer:
         # will be closed eventually.
 
     def _clear_queues(self) -> None:
-        """Clear all queues to prevent old data from being processed"""
+        """清空内部队列，防止旧数据继续被处理。"""
         # Clear text queue
         while not self.text_queue.empty():
             try:
@@ -822,6 +835,8 @@ class BytedanceV3Synthesizer:
 
 
 class BytedanceV3Client:
+    """客户端封装：管理当前 active 的 synthesizer，并处理重置/清理逻辑。"""
+
     def __init__(
         self,
         config: BytedanceTTSDuplexConfig,
@@ -846,13 +861,13 @@ class BytedanceV3Client:
         )
 
     def _create_synthesizer(self) -> BytedanceV3Synthesizer:
-        """Create new synthesizer instance"""
+        """创建新的 synthesizer 实例（新连接+新会话上下文）。"""
         return BytedanceV3Synthesizer(
             self.config, self.ten_env, self.vendor, self.response_msgs
         )
 
     async def _cleanup_cancelled_synthesizers(self) -> None:
-        """Periodically clean up completed cancelled synthesizers"""
+        """定期清理已取消且任务结束的 synthesizer，避免泄漏。"""
         while True:
             try:
                 for synthesizer in self.cancelled_synthesizers[:]:
@@ -871,7 +886,7 @@ class BytedanceV3Client:
                 await asyncio.sleep(5.0)
 
     def cancel(self) -> None:
-        """Cancel current synthesizer and create new synthesizer"""
+        """取消当前 synthesizer 并立刻创建新的，用于 flush/中断重置。"""
         self.ten_env.log_info(
             "Cancelling current synthesizer and creating new one"
         )
@@ -897,7 +912,7 @@ class BytedanceV3Client:
         self.ten_env.log_info("New synthesizer created successfully")
 
     def reset_synthesizer(self):
-        """Reset synthesizer"""
+        """重置 synthesizer，通常在每次完成后重新建链。"""
         if self.synthesizer:
             self.cancelled_synthesizers.append(self.synthesizer)
             self.synthesizer.cancel()
@@ -906,19 +921,19 @@ class BytedanceV3Client:
         self.ten_env.log_info("Synthesizer reset successfully")
 
     async def send_text(self, text: str):
-        """Send text"""
+        """发送文本到当前 synthesizer。"""
         await self.synthesizer.send_text(text)
 
     async def finish_session(self):
-        """Finish session"""
+        """结束当前 session。"""
         await self.synthesizer.finish_session()
 
     async def finish_connection(self):
-        """Finish connection"""
+        """结束当前连接。"""
         await self.synthesizer.finish_connection()
 
     async def close(self):
-        """Close client"""
+        """关闭客户端与所有 synthesizer。"""
         self.ten_env.log_info("Closing BytedanceV3Client")
 
         # Cancel cleanup task

@@ -35,6 +35,8 @@ from ten_runtime import (
 
 
 class BytedanceTTSDuplexExtension(AsyncTTS2BaseExtension):
+    """火山双工 TTS 扩展，负责把 main_control 发来的文本转为音频帧再回给 RTC。"""
+
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self.config: BytedanceTTSDuplexConfig | None = None
@@ -53,6 +55,7 @@ class BytedanceTTSDuplexExtension(AsyncTTS2BaseExtension):
         self.is_reconnecting = False
 
     async def on_init(self, ten_env: AsyncTenEnv) -> None:
+        """初始化：读取配置，创建火山客户端并开启消息轮询协程。"""
         try:
             await super().on_init(ten_env)
             ten_env.log_debug("on_init")
@@ -121,6 +124,7 @@ class BytedanceTTSDuplexExtension(AsyncTTS2BaseExtension):
         return self.config.sample_rate
 
     async def _loop(self) -> None:
+        """消费 BytedanceV3Client 推来的事件队列，按事件类型分发。"""
         while True:
             try:
                 event, data = await self.response_msgs.get()
@@ -292,7 +296,7 @@ class BytedanceTTSDuplexExtension(AsyncTTS2BaseExtension):
                 if not self.last_completed_has_reset_synthesizer:
                     await self.client.finish_connection()
                     self.client.reset_synthesizer()
-                    self.last_completed_has_reset_synthesizer = True
+                self.last_completed_has_reset_synthesizer = True
 
         except ModuleVendorException as e:
             self.ten_env.log_error(
@@ -322,6 +326,7 @@ class BytedanceTTSDuplexExtension(AsyncTTS2BaseExtension):
             )
 
     async def on_data(self, ten_env: AsyncTenEnv, data: Data) -> None:
+        """处理运行时下发的控制数据，目前主要响应 tts_flush 以打断当前会话。"""
         name = data.get_name()
         if name == "tts_flush":
             # Cancel current connection (maintain original flush disconnect behavior)

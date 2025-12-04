@@ -12,6 +12,7 @@ from ten_runtime import (
 
 @register_addon_as_extension("bytedance_tts_duplex")
 class BytedanceTTSDuplexExtensionAddon(Addon):
+    """注册入口：告知 TEN 这个扩展名为 bytedance_tts_duplex，对应 BytedanceTTSDuplexExtension。"""
 
     def on_create_instance(self, ten_env: TenEnv, name: str, context) -> None:
         from .extension import BytedanceTTSDuplexExtension

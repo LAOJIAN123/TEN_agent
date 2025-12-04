@@ -1,7 +1,20 @@
 {
-    "idf.flashType": "UART",
-    "idf.port": "/dev/tty.usbmodem11301",
-    "idf.openOcdConfigs": [
-        "board/esp32s3-builtin.cfg"
-    ]
+  "idf.flashType": "UART",
+  "idf.port": "/dev/tty.usbserial-1130",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.monitorPort": "/dev/tty.usbserial-1130",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3"
+  },
+  "clangd.path": "/Users/linxiansheng/.espressif/tools/esp-clang/esp-18.1.2_20240912/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=/Users/linxiansheng/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc",
+    "--compile-commands-dir=/Users/linxiansheng/工作/CODE/TEN_agent/ai_agents/esp32-client/build"
+  ],
+  "idf.espIdfPath": "/Users/linxiansheng/esp-idf",
+  "idf.toolsPath": "/Users/linxiansheng/.espressif",
+  "idf.pythonInstallPath": "/Users/linxiansheng/.espressif/python_env/idf5.2_py3.9_env/bin/python"
 }

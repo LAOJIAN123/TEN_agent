@@ -4,6 +4,8 @@ from ten_ai_base import utils
 
 
 class BytedanceTTSDuplexConfig(BaseModel):
+    """配置模型：负责从 property.json/params 中抽取火山双工 TTS 所需参数，并做校验。"""
+
     # Bytedance TTS credentials
     app_id: str = ""
     token: str = ""
@@ -25,6 +27,7 @@ class BytedanceTTSDuplexConfig(BaseModel):
     enable_words: bool = False
 
     def update_params(self) -> None:
+        """把 params 里的值映射到字段，并补齐必须的 audio_params。"""
         ##### get value from params #####
         if "app_id" in self.params:
             self.app_id = self.params["app_id"]
@@ -57,7 +60,7 @@ class BytedanceTTSDuplexConfig(BaseModel):
         self.params["audio_params"]["format"] = "pcm"
 
     def validate_params(self) -> None:
-        """Validate required configuration parameters."""
+        """校验必填项（app_id/token/speaker），缺失则直接抛异常阻止启动。"""
         required_fields = ["app_id", "token", "speaker"]
 
         for field_name in required_fields:
@@ -68,6 +71,7 @@ class BytedanceTTSDuplexConfig(BaseModel):
                 )
 
     def to_str(self, sensitive_handling: bool = False) -> str:
+        """打印配置，若 sensitive_handling=True 则对敏感字段加密显示。"""
         if not sensitive_handling:
             return f"{self}"
         config = self.copy(deep=True)

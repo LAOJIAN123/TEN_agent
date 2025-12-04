@@ -16,7 +16,7 @@
                 "app_certificate": "${env:AGORA_APP_CERTIFICATE|}",
                 "channel": "ten_agent_test",
                 "stream_id": 1234,
-                "remote_stream_id": 123,
+                "remote_stream_id": 1234,
                 "subscribe_audio": true,
                 "publish_audio": true,
                 "publish_data": true,
@@ -26,14 +26,17 @@
             {
               "type": "extension",
               "name": "stt",
-              "addon": "deepgram_asr_python",
+              "addon": "bytedance_asr",
               "extension_group": "stt",
               "property": {
                 "params": {
-                  "model": "nova-3",
+                  "cluster": "volcengine_streaming_common",
                   "language": "zh",
-                  "api_key": "430f3ebe0a55461470a28807b25b3469c105dded"
-                }
+                  "token": "nmJqbVtOamX-eFStoEbOvqskvZMUrD1v",
+                  "appid": "7513771626"
+                },
+                "dump_path": "./",
+                "dump": false
               }
             },
             {
@@ -57,7 +60,7 @@
               "addon": "main_python",
               "extension_group": "control",
               "property": {
-                "greeting": "TEN Agent connected. How can I help you today?"
+                "greeting": "你好？我是小范。有什么可以帮你吗？"
               }
             },
             {
@@ -76,20 +79,19 @@
                 "base_url": "https://api.moonshot.cn/v1",
                 "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
                 "model": "kimi-k2-turbo-preview",
-                "prompt": "你是一个会开玩笑的语音对话机器人,只会说中文"
+                "prompt": "你是一个严肃的语音对话机器人"
               }
             },
             {
               "type": "extension",
               "name": "tts",
-              "addon": "elevenlabs_tts2_python",
+              "addon": "bytedance_tts_duplex",
               "extension_group": "tts",
               "property": {
                 "params": {
-                  "key": "sk_49d964226c0a9763396cd086c0f555807b50d1b3fb0bf69d",
-                  "voice_id": "pNInz6obpgDQGcFmaJgB",
-                  "model_id": "eleven_multilingual_v2",
-                  "output_format": "pcm_16000"
+                  "token": "nmJqbVtOamX-eFStoEbOvqskvZMUrD1v",
+                  "app_id": "7513771626",
+                  "speaker": "zh_female_yuanqinvyou_moon_bigtts"
                 },
                 "dump": false,
                 "dump_path": "./"
