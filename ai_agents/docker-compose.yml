@@ -20,7 +20,7 @@ services:
 
     ports:
       # TEN 管理 API
-      - "9500:8397"
+      - "9500:8080"
 
       # TMAN Designer 后端端口
       - "9501:49483"

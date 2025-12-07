@@ -1,0 +1,230 @@
+{
+  "ten": {
+    "log": {
+      "handlers": [
+        {
+          "emitter": {
+            "config": {
+              "stream": "stdout"
+            },
+            "type": "console"
+          },
+          "formatter": {
+            "colored": true,
+            "type": "plain"
+          },
+          "matchers": [
+            {
+              "level": "info"
+            }
+          ]
+        }
+      ]
+    },
+    "predefined_graphs": [
+      {
+        "auto_start": true,
+        "graph": {
+          "connections": [
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "streamid_adapter"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                },
+                {
+                  "name": "pcm_frame",
+                  "source": [
+                    {
+                      "extension": "tts"
+                    }
+                  ]
+                }
+              ],
+              "data": [
+                {
+                  "name": "data",
+                  "source": [
+                    {
+                      "extension": "message_collector"
+                    }
+                  ]
+                }
+              ],
+              "extension": "agora_rtc"
+            },
+            {
+              "audio_frame": [
+                {
+                  "dest": [
+                    {
+                      "extension": "stt"
+                    }
+                  ],
+                  "name": "pcm_frame"
+                }
+              ],
+              "extension": "streamid_adapter"
+            },
+            {
+              "cmd": [
+                {
+                  "names": [
+                    "on_user_joined",
+                    "on_user_left"
+                  ],
+                  "source": [
+                    {
+                      "extension": "agora_rtc"
+                    }
+                  ]
+                },
+                {
+                  "names": [
+                    "tool_register"
+                  ],
+                  "source": [
+                    {
+                      "extension": "weatherapi_tool_python"
+                    }
+                  ]
+                }
+              ],
+              "data": [
+                {
+                  "name": "asr_result",
+                  "source": [
+                    {
+                      "extension": "stt"
+                    }
+                  ]
+                },
+                {
+                  "dest": [
+                    {
+                      "extension": "tts"
+                    }
+                  ],
+                  "name": "tts_text_input"
+                }
+              ],
+              "extension": "main_control"
+            },
+            {
+              "cmd": [
+                {
+                  "dest": [
+                    {
+                      "extension": "llm"
+                    }
+                  ],
+                  "name": "chat_completion"
+                }
+              ],
+              "extension": "main_control"
+            }
+          ],
+          "nodes": [
+            {
+              "addon": "agora_rtc",
+              "extension_group": "default",
+              "name": "agora_rtc",
+              "property": {
+                "app_certificate": "${env:AGORA_APP_CERTIFICATE|}",
+                "app_id": "${env:AGORA_APP_ID}",
+                "channel": "agora_0ie4pw",
+                "enable_agora_asr": false,
+                "publish_audio": true,
+                "publish_data": true,
+                "remote_stream_id": 196063,
+                "stream_id": 0,
+                "subscribe_audio": true,
+                "token": "007eJxSYEgS+sz3fe3dH5fmBB//dHFXZ+7tqfpR10SvbQ71sfk4wcJbgcHU0tTQNC0x1dTA0NzEPNnI0tw4ySjFxDzF3Mw0zcDY8GanUWZDICPD5o23WJkYGBlYGBgZQHwmMMkMJlnAJA9DYnp+UWK8QWaqSUE5I4MBSDlEMSODASAAAP//Ao0osQ=="
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_asr",
+              "extension_group": "stt",
+              "name": "stt",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "appid": "7513771626",
+                  "cluster": "volcengine_streaming_common",
+                  "language": "zh",
+                  "token": "nmJqbVtOamX-eFStoEbOvqskvZMUrD1v"
+                }
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "weatherapi_tool_python",
+              "extension_group": "default",
+              "name": "weatherapi_tool_python",
+              "property": {
+                "api_key": "${env:WEATHERAPI_API_KEY|}"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "streamid_adapter",
+              "name": "streamid_adapter",
+              "property": {},
+              "type": "extension"
+            },
+            {
+              "addon": "main_python",
+              "extension_group": "control",
+              "name": "main_control",
+              "property": {
+                "greeting": "你好？我是小范。有什么可以帮你吗？"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "message_collector2",
+              "extension_group": "transcriber",
+              "name": "message_collector",
+              "property": {},
+              "type": "extension"
+            },
+            {
+              "addon": "openai_llm2_python",
+              "extension_group": "chatgpt",
+              "name": "llm",
+              "property": {
+                "api_key": "sk-wMHIbtvJbLbGcPe73uUxiZMMqeiYdkuNVQuq5jDjBCv3GAO1",
+                "base_url": "https://api.moonshot.cn/v1",
+                "model": "kimi-k2-turbo-preview",
+                "prompt": "你是一个严肃的语音对话机器人"
+              },
+              "type": "extension"
+            },
+            {
+              "addon": "bytedance_tts_duplex",
+              "extension_group": "tts",
+              "name": "tts",
+              "property": {
+                "dump": false,
+                "dump_path": "./",
+                "params": {
+                  "app_id": "7513771626",
+                  "speaker": "zh_female_yuanqinvyou_moon_bigtts",
+                  "token": "nmJqbVtOamX-eFStoEbOvqskvZMUrD1v"
+                }
+              },
+              "type": "extension"
+            }
+          ]
+        },
+        "name": "voice_assistant"
+      }
+    ]
+  }
+}

@@ -91,9 +91,15 @@ docker run --rm -it --env-file .env -p 3000:3000 example-app
 echo "AGORA_APP_ID=59515fae501747c2973b2d47d765f031" > .env
 echo "AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56" >> .env
 
+cd agents/examples/voice-assistant
 export AGORA_APP_ID=59515fae501747c2973b2d47d765f031
 export AGORA_APP_CERTIFICATE=6c944086d7964f9fbe1a20d561788b56
+export SERVER_PORT=8080
 export AGORA_CHANNEL=demo
+
+
+新建docker：docker compose -f docker-compose.yml up -d --build --force-recreate
+新建之后补全依赖的python包：pip install pydantic aiohttp
 
 2.在docker-compose.yml 里永久设置
 `environment:`
