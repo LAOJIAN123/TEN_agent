@@ -9,11 +9,12 @@
 #include "cJSON.h"
 
 #include "esp_http_client.h"
+#include "esp_crt_bundle.h"
 #include "common.h"
 
 
 #define JSON_URL_LEN           128
-#define REQ_JSON_LEN           512
+#define REQ_JSON_LEN           2048  /* allow room for full token/app_id payload */
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 
 
@@ -330,6 +331,8 @@ void ai_agent_generate(void)
     esp_http_client_config_t config = {
         .url           = generate_url,
         .event_handler = _http_event_handler,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .skip_cert_common_name_check = true,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_method(client, HTTP_METHOD_POST);
@@ -375,6 +378,8 @@ void ai_agent_start(void)
     esp_http_client_config_t config = {
         .url           = start_url,
         .event_handler = _http_event_handler,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .skip_cert_common_name_check = true,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_method(client, HTTP_METHOD_POST);
@@ -419,6 +424,8 @@ void ai_agent_ping(void)
     esp_http_client_config_t config = {
         .url           = ping_url,
         .event_handler = _http_event_handler,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .skip_cert_common_name_check = true,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_method(client, HTTP_METHOD_POST);
@@ -463,6 +470,8 @@ void ai_agent_stop(void)
     esp_http_client_config_t config = {
         .url           = stop_url,
         .event_handler = _http_event_handler,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .skip_cert_common_name_check = true,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_method(client, HTTP_METHOD_POST);

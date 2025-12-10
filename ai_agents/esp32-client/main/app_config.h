@@ -3,7 +3,7 @@
 
 //LLM Agent Service
 // #define TENAI_AGENT_URL       "http://<ip_address>:<port>"
-#define TENAI_AGENT_URL       "http://192.168.2.46:8080/"
+#define TENAI_AGENT_URL       "http://192.168.2.46:9500"
 // LLM Agent Graph, you can select openai or gemini 
 // #define CONFIG_GRAPH_OPENAI   /* openai, just only audio */
 #define CONFIG_GRAPH_GEMINI     /* gemini, for video and audio, but not support chinese language */
@@ -35,7 +35,8 @@
 
 
 /* function config */
-/* audio codec */
+/* audio codec：Opus 初始化仍在崩溃，回退到 G711U（8 kHz），避免 encoder 为空 */
 #define CONFIG_USE_G711U_CODEC
+// #define CONFIG_USE_OPUS_CODEC
 /* video process */
-// #define CONFIG_AUDIO_ONLY
+#define CONFIG_AUDIO_ONLY

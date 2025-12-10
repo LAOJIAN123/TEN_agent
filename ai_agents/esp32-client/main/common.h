@@ -18,13 +18,24 @@ extern "C" {
 #define CONFIG_PCM_SAMPLE_RATE (16000)
 #define CONFIG_PCM_DATA_LEN     640
 #define CONFIG_SEND_PCM_DATA
-#define TENAI_AUDIO_CODEC           "{\"che.audio.custom_payload_type\":9}"
+/* PCM 桥接：不指定自定义负载类型，由服务端按默认处理 */
+#define TENAI_AUDIO_CODEC           "{}"
+
 #elif defined(CONFIG_USE_G711U_CODEC)
 #define AUDIO_CODEC_TYPE AUDIO_CODEC_TYPE_G711U
 #define CONFIG_PCM_SAMPLE_RATE (8000)
 #define CONFIG_PCM_DATA_LEN     320
 #define CONFIG_SEND_PCM_DATA
-#define TENAI_AUDIO_CODEC           "{\"che.audio.custom_payload_type\":0}"
+/* PCM 桥接：不指定自定义负载类型，由服务端按默认处理 */
+#define TENAI_AUDIO_CODEC           "{}"
+  
+#elif defined(CONFIG_USE_OPUS_CODEC)
+#define AUDIO_CODEC_TYPE AUDIO_CODEC_TYPE_OPUS
+#define CONFIG_PCM_SAMPLE_RATE (16000)
+#define CONFIG_PCM_DATA_LEN     640
+#define CONFIG_SEND_PCM_DATA
+/* 使用自定义负载类型 122，匹配服务器下行 */
+#define TENAI_AUDIO_CODEC           "{\"che.audio.custom_payload_type\":122}"
 #else
 #pragma message "should config audio codec type first"
 #endif

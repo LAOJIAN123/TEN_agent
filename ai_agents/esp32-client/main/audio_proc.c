@@ -27,6 +27,19 @@
 
 
 
+/* 音频线程拓扑（录制→算法→裸流→RTC，下行则反向）：
+ *
+ *   麦克风I2S(i2s_stream_reader)
+ *            │PCM
+ *            ▼
+ *      AEC 算法(element_algo)
+ *            │净化后的PCM
+ *            ▼
+ *     raw_read (raw_stream，供上行读取) ──► send_rtc_audio_frame
+ *
+ *   下行播放路径：RTC 收到数据 ─► raw_write ─► i2s_stream_writer ─► 扬声器
+ *   raw_read/raw_write、recorder/player 的句柄在此文件统一维护。
+ */
 static audio_element_handle_t raw_read, element_algo, raw_write;
 static audio_pipeline_handle_t recorder, player;
 static SemaphoreHandle_t g_audio_capture_sem  = NULL;
@@ -132,8 +145,25 @@ static void _pipeline_close(audio_pipeline_handle_t handle)
   audio_pipeline_deinit(handle);
 }
 
+//读取麦克风发送声网sdk任务
 static void audio_send_thread(void *arg)
 {
+  /* 线程职责概览：
+   *   ┌─ 初始化录制/播放流水线（recorder/player）
+   *   ├─ 等待信号量释放，表明流水线已就绪
+   *   └─ 循环读取净化后的 PCM（raw_read），推送到 RTC（send_rtc_audio_frame）
+   *
+   * 时序示意：
+   *   recorder_pipeline_open() ─► audio_pipeline_run(recorder)
+   *                          └► player_pipeline_open() ─► audio_pipeline_run(player)
+   *   while (b_call_session_started):
+   *       raw_stream_read(raw_read) ─► send_rtc_audio_frame(...)
+   *
+   * 关键资源：
+   *   - raw_read/raw_write：音频裸流端点，录制输出、播放输入
+   *   - g_app.b_call_session_started：RTC 状态位，控制循环退出
+   *   - g_audio_capture_sem：与其他任务同步“音频管线已准备好”
+   */
   int ret = 0;
 
   uint8_t *audio_pcm_buf = heap_caps_malloc(CONFIG_PCM_DATA_LEN, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -145,16 +175,19 @@ static void audio_send_thread(void *arg)
   recorder_pipeline_open();
   player_pipeline_open();
 
+  /* 通知其他线程“管线已就绪”，对应 audio_sema_init()/audio_sema_post() 协调 */
   audio_sema_post();
 
   audio_pipeline_run(recorder);
   audio_pipeline_run(player);
   while (g_app.b_call_session_started) {
+    /* 从 AEC 后的裸流读取一帧 PCM 数据 */
     ret = raw_stream_read(raw_read, (char *)audio_pcm_buf, CONFIG_PCM_DATA_LEN);
     if (ret != CONFIG_PCM_DATA_LEN) {
       printf("read raw stream error, expect %d, but only %d\n", CONFIG_PCM_DATA_LEN, ret);
     }
 
+    /* 将 PCM 交给 RTC SDK 上行发送 */
     send_rtc_audio_frame(audio_pcm_buf, CONFIG_PCM_DATA_LEN);
   }
 
@@ -172,7 +205,12 @@ THREAD_END:
 
 int playback_stream_write(char *data, int len)
 {
-  return raw_stream_write(raw_write, data, len);
+    static char opus_data_cache[1024]; 
+    opus_data_cache[0] = (len >> 8) & 0xFF;
+    opus_data_cache[1] = len & 0xFF;
+    memcpy(opus_data_cache + 2, data, len);
+    // player_pipeline_write(context->player_pipeline, opus_data_cache, data_len + 2);
+  return raw_stream_write(raw_write,  opus_data_cache,len + 2);
 }
 
 void setup_audio(void)
@@ -184,7 +222,8 @@ void setup_audio(void)
 
 int audio_start_proc(void)
 {
-  int rval = audio_thread_create(g_audio_thread, "audio_send_task", audio_send_thread, NULL, 4 * 1024, PRIO_TASK_FETCH, true, 0);
+  /* srmodel_mmap_init 会在该线程中运行，栈需在内部内存以避免 cache disabled 时断言 */
+  int rval = audio_thread_create(g_audio_thread, "audio_send_task", audio_send_thread, NULL, 4 * 1024, PRIO_TASK_FETCH, false, 0);
   if (rval != ESP_OK) {
     printf("Unable to create audio capture thread!\n");
     return -1;
