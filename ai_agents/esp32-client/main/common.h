@@ -7,7 +7,7 @@ extern "C" {
 #include <stdlib.h>
 #include "app_config.h"
 
-#define RTC_APP_ID_LEN   32
+#define RTC_APP_ID_LEN   64  /* allow full appid string */
 #define RTC_TOKEN_LEN    512
 
 #define AUDIO_I2S_BITS   32
@@ -22,13 +22,12 @@ extern "C" {
 #define TENAI_AUDIO_CODEC           "{}"
 
 #elif defined(CONFIG_USE_G711U_CODEC)
-#define AUDIO_CODEC_TYPE AUDIO_CODEC_TYPE_G711U
+#define AUDIO_CODEC_TYPE AUDIO_CODEC_DISABLED
 #define CONFIG_PCM_SAMPLE_RATE (8000)
 #define CONFIG_PCM_DATA_LEN     320
 #define CONFIG_SEND_PCM_DATA
-/* PCM 桥接：不指定自定义负载类型，由服务端按默认处理 */
-#define TENAI_AUDIO_CODEC           "{}"
-  
+/* 使用负载类型 0，对齐服务器 G711U */
+#define TENAI_AUDIO_CODEC           "{\"che.audio.custom_payload_type\":0}"
 #elif defined(CONFIG_USE_OPUS_CODEC)
 #define AUDIO_CODEC_TYPE AUDIO_CODEC_TYPE_OPUS
 #define CONFIG_PCM_SAMPLE_RATE (16000)
@@ -44,7 +43,19 @@ extern "C" {
 #define CONFIG_AUDIO_FRAME_DURATION_MS                                               \
   (CONFIG_PCM_DATA_LEN * 1000 / CONFIG_PCM_SAMPLE_RATE / CONFIG_PCM_CHANNEL_NUM / sizeof(int16_t))
 
-
+/* g_app 负责跨模块保存会话状态，字段与流程对应关系示意：
+ *
+ *   Wi‑Fi联通        AI Agent令牌生成           RTC会话状态
+ *   ──────────┬──────────────────────┬─────────────────────
+ *   b_wifi_connected                 │
+ *                                    │
+ *                                    ├─ b_ai_agent_generated：生成 app_id/token
+ *                                    │
+ *                                    ├─ b_ai_agent_joined：用户按键入会
+ *                                    │
+ *                                    └─ b_call_session_started：RTC 已连通
+ *   底层凭据：app_id/token 供 rtc_proc、ai_agent 共用
+ */
 typedef struct {
   bool b_wifi_connected;
   bool b_ai_agent_generated;

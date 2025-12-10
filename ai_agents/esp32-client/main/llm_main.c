@@ -50,6 +50,16 @@
 #include "video_proc.h"
 #endif
 
+/* 系统流程速览（模块与结构体的关系）：
+ *
+ *   g_app（common.h）：集中保存 Wi‑Fi/AI Agent/RTC 的状态 + 凭证(app_id/token)
+ *        │
+ *        ├─ Wi‑Fi 连接：setup_wifi() -> event_handler() 写 b_wifi_connected
+ *        ├─ AI Agent REST：ai_agent_generate()/start/ping/stop 使用 g_app.app_id/token
+ *        └─ RTC 通话：agora_rtc_proc_create() 依赖 g_app.app_id/token，回调里再驱动
+ *             ├─ audio_proc.c 录制+播放（raw_read/raw_write）
+ *             └─ video_proc.c 采集 JPEG 帧（非音频专用配置启用）
+ */
 app_t g_app = {
   .b_call_session_started = false,
   .b_ai_agent_generated   = false,
@@ -187,6 +197,7 @@ static void setup_key_button(void)
 
 int app_main(void)
 {
+  /* 1) NVS 与 Wi‑Fi 先就绪，确保后续联网请求能走通 */
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -203,14 +214,18 @@ int app_main(void)
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 
+  /* 2) 向 TEN 服务生成 AI Agent 的 token/app_id，结果写入 g_app */
   ai_agent_generate();
 
+  /* 3) 外设输入与音频链路准备好，按键可控制启动/停止 */
   // init and start key button
   setup_key_button();
 
   //setup and start audio
   setup_audio();
+  //创建信号量
   audio_sema_init();
+  //创建任务：audio_send_thread
   audio_start_proc();
 
   printf("~~~~~start agora rtc demo~~~~\r\n");
@@ -219,6 +234,7 @@ int app_main(void)
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 
+  /* 4) 使用刚获取的 app_id/token 加入 RTC，建立媒体通道，并确定发送音频的编码格式 */
   agora_rtc_proc_create(NULL, AI_AGENT_USER_ID);
 
   while(!g_app.b_call_session_started) {
@@ -230,6 +246,7 @@ int app_main(void)
     start_video_proc();
 #endif
 
+  /* 5) 主循环：定期发送 keepalive，同时输出内存占用 */
   printf("Agora: Press [SET] key to join the Ai Agent ...\n");
 
   while (1) {

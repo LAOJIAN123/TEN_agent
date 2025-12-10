@@ -24,6 +24,7 @@
 #define TENAI_AGENT_PING      "ping"
 
 
+/* 统一解析服务端 JSON 响应：校验 code/msg，首次生成时写入 g_app.app_id/token */
 static int _parse_resp_data(const char *resp_data, const int data_len)
 {
     if (data_len == 0) {
@@ -79,7 +80,8 @@ static int _parse_resp_data(const char *resp_data, const int data_len)
     // make sure it is string and get value
     if (cJSON_IsString(app_id) && (app_id->valuestring != NULL)) {
         printf("appId: %s\n", app_id->valuestring);
-        memcpy(g_app.app_id, app_id->valuestring, RTC_APP_ID_LEN);
+        memset(g_app.app_id, 0, sizeof(g_app.app_id));
+        strlcpy(g_app.app_id, app_id->valuestring, sizeof(g_app.app_id));
     }
 
     cJSON *token = cJSON_GetObjectItemCaseSensitive(data, "token");
@@ -87,7 +89,8 @@ static int _parse_resp_data(const char *resp_data, const int data_len)
     // make sure it is string and get value
     if (cJSON_IsString(token) && (token->valuestring != NULL)) {
         printf("token: %s\n", token->valuestring);
-        memcpy(g_app.token, token->valuestring, RTC_TOKEN_LEN);
+        memset(g_app.token, 0, sizeof(g_app.token));
+        strlcpy(g_app.token, token->valuestring, sizeof(g_app.token));
     }  
 
     g_app.b_ai_agent_generated = true;
@@ -105,6 +108,7 @@ static int _parse_resp_data(const char *resp_data, const int data_len)
  */
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 {
+    /* 事件回调负责聚合 HTTP 响应数据并在 FINISH 时调用解析 */
     static char *output_buffer;  // Buffer to store response of http request from event handler
     static int output_len;       // Stores number of bytes read
     switch(evt->event_id) {
@@ -208,6 +212,7 @@ static char *_build_generate_json(void)
 {
     char *json_ptr = NULL;
 
+    /* 生成 token/appId 的请求体，只包含基本身份字段 */
     cJSON *root = cJSON_CreateObject();
     if (root == NULL) {
       goto BUILD_END;
@@ -253,6 +258,7 @@ static char *_build_start_json(void)
 {
     char *json_ptr = NULL;
 
+    /* 启动 Agent 的请求体：指定图名称与属性，带上下行编解码和 LLM 配置 */
     cJSON *root = cJSON_CreateObject();
     if (root == NULL) {
       goto BUILD_END;
@@ -301,6 +307,7 @@ static char *_build_common_json(void)
 {
     char *json_ptr = NULL;
 
+    /* ping/stop 共用的轻量请求体，仅带 request_id/channel */
     cJSON *root = cJSON_CreateObject();
     if (root == NULL) {
       goto BUILD_END;
@@ -323,6 +330,12 @@ void ai_agent_generate(void)
 {
     char request[REQ_JSON_LEN] = {'\0'};
 
+    /* 步骤：
+     * 1) 拼接生成接口 URL（TENAI_AGENT_GENERATE）
+     * 2) 初始化 HTTP 客户端，设置事件回调/证书
+     * 3) 构造包含 request_id/uid/channel 的 JSON 负载
+     * 4) POST 请求并在 _http_event_handler-> _parse_resp_data 中写入 g_app.app_id/token
+     */
     char generate_url[JSON_URL_LEN] = { 0 };
     snprintf(generate_url, JSON_URL_LEN, "%s/%s", TENAI_AGENT_URL, TENAI_AGENT_GENERATE);
 
@@ -338,6 +351,7 @@ void ai_agent_generate(void)
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
+    /* 发送生成请求，成功后 _http_event_handler 会触发 _parse_resp_data 写入 g_app */
     char *json_buff = _build_generate_json();
     snprintf(request, REQ_JSON_LEN, "%s", json_buff);
     free(json_buff);
@@ -385,6 +399,7 @@ void ai_agent_start(void)
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
+    /* 发送启动请求（带 graph 配置）；回调统一复用 _http_event_handler */
     char *json_buff = _build_start_json();
     snprintf(request, REQ_JSON_LEN, "%s", json_buff);
     free(json_buff);
@@ -417,6 +432,11 @@ void ai_agent_ping(void)
 {
     char request[REQ_JSON_LEN] = {'\0'};
 
+    /* 保活流程：
+     * 1) 拼接 ping URL
+     * 2) 构建轻量 JSON（request_id + channel_name）
+     * 3) POST 发送，复用统一事件回调解析结果
+     */
     char ping_url[JSON_URL_LEN] = { 0 };
 
     snprintf(ping_url, JSON_URL_LEN, "%s/%s", TENAI_AGENT_URL, TENAI_AGENT_PING);
@@ -431,6 +451,7 @@ void ai_agent_ping(void)
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
+    /* 心跳请求，保持 TEN 服务端的会话活性 */
     char *json_buff = _build_common_json();
     snprintf(request, REQ_JSON_LEN, "%s", json_buff);
     free(json_buff);
@@ -477,6 +498,7 @@ void ai_agent_stop(void)
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
+    /* 停止请求，使用通用最小字段 */
     char *json_buff = _build_common_json();
     snprintf(request, REQ_JSON_LEN, "%s", json_buff);
     free(json_buff);

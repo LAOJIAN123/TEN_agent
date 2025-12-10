@@ -1,0 +1,8 @@
+{
+  "name": "voice-assistant",
+  "version": "0.1.0",
+  "type": "agent",
+  "dependencies": {
+    "ten_packages_system_extension_group": "0.1.0"
+  }
+}

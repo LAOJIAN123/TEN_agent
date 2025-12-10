@@ -114,7 +114,15 @@ void __on_stream_message(connection_id_t conn_id, uint32_t uid, int stream_id, c
   // printf("[conn-%lu] stream message: uid=%lu stream_id=%d length=%zu\n", conn_id, uid, stream_id, length);
 }
 
-
+/* 事件回调分层说明（所有回调统一注册到 agora_rtc_event_handler_t）：
+ *
+ *   ┌─ 链路状态：__on_join_channel_success / __on_rejoin_channel_success / __on_connection_lost
+ *   ├─ 远端状态：__on_user_joined / __on_user_offline / __on_user_mute_audio / __on_user_mute_video
+ *   ├─ 媒体数据：__on_audio_data 或 __on_mixed_audio_data；__on_video_data
+ *   └─ 诊断告警：__on_error / __on_target_bitrate_changed / __on_key_frame_gen_req / __on_stream_message
+ *
+ * 这些指针由 app_init_event_handler 统一填入 event_handler，供 agora_rtc_init 注册。
+ */
 static void app_init_event_handler(agora_rtc_event_handler_t *event_handler)
 {
   event_handler->on_join_channel_success   = __on_join_channel_success;
@@ -142,6 +150,12 @@ static void app_init_event_handler(agora_rtc_event_handler_t *event_handler)
 
 int agora_rtc_proc_create(char *license, uint32_t uid)
 {
+  /* 创建 RTC 会话的完整流程：
+   * 1) 组合事件回调并初始化 Agora SDK（带可选 license）
+   * 2) 创建连接句柄 g_conn_id
+   * 3) 配置频道参数（是否自动订阅、音频编码/PCM 参数）
+   * 4) 加入频道，后续回调在 app_init_event_handler 中触发
+   */
   int rval = -1;
 
   // 1. API: init agora rtc sdk
@@ -149,9 +163,9 @@ int agora_rtc_proc_create(char *license, uint32_t uid)
   app_init_event_handler(&event_handler);
 
   rtc_service_option_t service_opt = { 0 };
-  service_opt.area_code            = AREA_CODE_GLOB;
+  service_opt.area_code            = AREA_CODE_GLOB;//中国
   service_opt.log_cfg.log_disable  = false;
-  service_opt.log_cfg.log_level    = RTC_LOG_WARNING;
+  service_opt.log_cfg.log_level    = RTC_LOG_DEBUG;//DEBUG级别日志
   service_opt.log_cfg.log_path     = DEFAULT_SDK_LOG_PATH;
 
   if (!license) {
@@ -185,7 +199,7 @@ int agora_rtc_proc_create(char *license, uint32_t uid)
   /* If we want to send PCM data instead of encoded audio like AAC or Opus, here please enable
    * audio codec, as well as configure the PCM sample rate and number of channels
    */
-  channel_options.audio_codec_opt.audio_codec_type = AUDIO_CODEC_TYPE;
+  channel_options.audio_codec_opt.audio_codec_type =   AUDIO_CODEC_TYPE_OPUS;
   channel_options.audio_codec_opt.pcm_sample_rate  = CONFIG_PCM_SAMPLE_RATE; 
   channel_options.audio_codec_opt.pcm_channel_num  = CONFIG_PCM_CHANNEL_NUM;
 #endif
